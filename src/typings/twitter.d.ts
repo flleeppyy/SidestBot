@@ -1,0 +1,3 @@
+interface TweetOptions {
+  text: string;
+}
