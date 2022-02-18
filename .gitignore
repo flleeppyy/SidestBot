@@ -150,7 +150,15 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/yarn,node
 
-src/config.ts
-src/cli/tags.json
-src/posts.json
-src/completedPosts.json
+cli/tags.json
+posts.json
+log
+cli/test.js
+
+instances/**/*
+!instances/instance_example
+!instances/instance_example/config.example.js
+
+./config.js
+
+./testing.js
