@@ -34,13 +34,13 @@ specifiers:
   socks-proxy-agent: ^6.1.1
   ts-node: ^10.5.0
   tsconfig-paths: ^3.12.0
+  tslib: ^2.3.1
   twitter-lite: ^1.1.0
   typescript: ^4.5.5
   yargs: ^17.3.1
 
 dependencies:
   '@discordjs/rest': 0.3.0
-  '@types/ws': 8.2.3
   axios: 0.24.0
   booru: 2.5.3
   colors: 1.4.0
@@ -58,12 +58,14 @@ dependencies:
   prompt: 1.2.2
   socks-proxy-agent: 6.1.1
   tsconfig-paths: 3.12.0
+  tslib: 2.3.1
   twitter-lite: 1.1.0
   yargs: 17.3.1
 
 devDependencies:
   '@types/node': 17.0.18
   '@types/node-telegram-bot-api': 0.53.6
+  '@types/ws': 8.2.3
   '@typescript-eslint/eslint-plugin': 5.12.0_c467cf9bb49b295941e83ce479a578b7
   '@typescript-eslint/parser': 5.12.0_eslint@8.9.0+typescript@4.5.5
   eslint: 8.9.0
@@ -899,7 +901,6 @@ packages:
     resolution: {integrity: sha512-ahRJZquUYCdOZf/rCsWg88S0/+cb9wazUBHv6HZEe3XdYaBe2zr/slM8J28X07Hn88Pnm4ezo7N8/ofnOgrPVQ==}
     dependencies:
       '@types/node': 17.0.18
-    dev: false
 
   /@types/yargs-parser/20.2.1:
     resolution: {integrity: sha512-7tFImggNeNBVMsn0vLrpn1H1uPrUBdnARPTpZoitY37ZrdJREzf7I16tMrlK3hen349gr1NYh8CmZQa7CTG6Aw==}
