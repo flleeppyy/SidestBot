@@ -1,13 +1,14 @@
 {
-  "ext": "ts,json",
-  "ignore": [
-    "node_modules",
-    "build"
-  ],
-  "watch": "src",
   "delay": 5000,
-  "env": {
-    "NODE_ENV": "development"
+  "verbose": true,
+  "ignore": [".git", "node_modules/", "dist/"],
+  "watch": ["src"],
+  "ext": "ts",
+  "execMap": {
+    "ts": "node --inspect -r ts-node/register -r tsconfig-paths/register"
   },
-  "verbose": true
+  "env": {
+    "TS_NODE_FILES": true,
+    "NODE_ENV": "development"
+  }
 }

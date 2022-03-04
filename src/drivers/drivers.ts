@@ -4,8 +4,9 @@
  * @module drivers/drivers
  */
 
-import { TwitterDriver } from "drivers/twitter";
-import { MastodonDriver } from "drivers/mastodon";
-import { TelegramDriver } from "drivers/telegram";
+import { DiscordDriver } from "./discord";
+import { MastodonDriver } from "./mastodon";
+import { TelegramDriver } from "./telegram";
+import { TwitterDriver } from "./twitter";
 
-export { TwitterDriver, MastodonDriver, TelegramDriver };
+export { TwitterDriver, MastodonDriver, TelegramDriver, DiscordDriver };

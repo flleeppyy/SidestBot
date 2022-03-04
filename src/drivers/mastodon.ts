@@ -1,17 +1,33 @@
-import { AccountCredentials, CreateStatusParams, login, MastoClient } from "masto";
+/**
+ * @file src/drivers/mastodon.ts
+ * @description Mastodon driver
+ * @module drivers/mastodon
+ */
+
+import axios from "axios";
+import FormData from "form-data";
+import { AccountCredentials, CreateStatusParams, MastoClient, login } from "masto";
+import type { InstanceInfo } from "types/instanceInfo";
+import type { InstanceConfig } from "../types/instanceConfig";
+import type { Media } from "../types/media";
+import type { MediaOptions } from "../types/mediaOptions";
 
 const STRING_UNINIT = "Mastodon client not initialized";
 export class MastodonDriver {
-  public client?: MastoClient;
-  constructor(private readonly access_token: string, private readonly base_url: string) {
-    this.access_token = access_token;
-    this.base_url = base_url;
+  public client: MastoClient | null;
+  private config: InstanceConfig["mastodon"];
+  private instance: InstanceInfo;
+
+  constructor(config: InstanceConfig["mastodon"], instance: InstanceInfo) {
+    this.config = config;
+    this.instance = instance;
+    this.client = null;
   }
 
   async init() {
     this.client = await login({
-      url: this.base_url,
-      accessToken: this.access_token,
+      url: this.config.base_url,
+      accessToken: this.config.access_token,
     });
     return this;
   }
@@ -40,18 +56,38 @@ export class MastodonDriver {
     return res;
   }
 
-  async tootMedia(media: Buffer, options: CreateStatusParams): Promise<string> {
+  async sendMedia(post: Media, options: MediaOptions): Promise<string> {
     if (this.client == null) {
       throw new Error(STRING_UNINIT);
     }
-    const attachment = await this.client.mediaAttachments.create({
-      file: media,
-    });
+    let attachment;
+    try {
+      // attachment = await this.client.mediaAttachments.create({
+      //   file: bufferToStream(post.buffer),
+      // });
+      const form = new FormData();
+      form.append("file", post.buffer, {
+        filename: post.post.file_url.split("/").pop(),
+        contentType: post.mimeType,
+      });
+      attachment = await axios.post(this.config.base_url + "/api/v2/media", form.getBuffer(), {
+        // "responseType": "json",
+        headers: {
+          // "Authorization": "Bearer HbgAUCDiPhWd6pXW7jFPbcEA8ONCh8j74jGaW4bsEX0",
+          Authorization: `Bearer ${this.config.access_token}`,
+          ...form.getHeaders(),
+        },
+      });
+
+      attachment = await this.client.mediaAttachments.waitFor(attachment.data.id, 500);
+    } catch (error) {
+      throw new Error("Failed to upload media" + error);
+    }
 
     const res = await this.client.statuses.create({
-      status: options.status,
+      status: options.text,
       mediaIds: [attachment.id],
-      visibility: options.visibility,
+      visibility: "public",
       sensitive: options.sensitive,
     });
 

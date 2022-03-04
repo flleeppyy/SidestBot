@@ -1,4 +1,4 @@
-export const config: Config = {
+module.exports = {
   options: {
     /* The text attached before the source. */
     status: "Example status",
@@ -15,26 +15,31 @@ export const config: Config = {
       // ...
     ],
   },
-  gelbooru: {
-    api_key: "",
-    user_id: "",
-  },
   /* Enable/disable drivers. Make sure to fill in their configuration options for access tokens and keys. */
   enabled: {
     Twitter: false,
     Mastodon: false,
     Telegram: false,
+    Discord: false
   },
   twitter: {
     consumer_key: "",
     consumer_secret: "",
+    access_token_key: "",
+    access_token_secret: "",
   },
   mastodon: {
     access_token: "",
     base_url: "",
+    allow_sensitive: false,
   },
   telegram: {
     token: "",
     chatId: "",
   },
+  discord: {
+    token: "",
+    channelId: "",
+    guildId: ""
+  }
 };

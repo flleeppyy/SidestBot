@@ -10,15 +10,16 @@ module.exports = {
     sourceType: "module",
   },
   plugins: ["@typescript-eslint", "prettier"],
-
+  
   rules: {
     "indent": ["error", 2],
     "linebreak-style": ["error", "unix"],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-var-requires": "off",
     "quotes": ["error", "double"],
     "semi": ["error", "always"],
-  },
+  },  
   /*
   "overrides": [
     {

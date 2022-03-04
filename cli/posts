@@ -1,0 +1,241 @@
+#!/usr/bin/env node
+// @ts-check
+const booru = require("booru");
+const yargs = require("yargs");
+const fs = require("fs");
+const path = require("path");
+const { hideBin } = require("yargs/helpers");
+
+const cliVersion = "1.0.0";
+
+yargs(hideBin(process.argv)).command({
+  command: "fetch",
+  describe: "Fetch posts from booru",
+  /**
+   * @type {yargs.CommandBuilder}
+   */
+  builder: {
+    // apiKey: {
+    //   alias: "k",
+    //   describe: "Booru API key",
+    //   string: true,
+    //   demandOption: false,
+    //   hidden: false,
+    // },
+    // userId: {
+    //   alias: "u",
+    //   describe: "Booru user id",
+    //   string: true,
+    //   demandOption: false,
+    //   hidden: false,
+    // },
+    includeTags: {
+      alias: "t",
+      describe: "Include tags of each post in the output (NOT RECOMMENDED)",
+      boolean: true,
+      demandOption: false,
+      hidden: false,
+    },
+    booru: {
+      alias: "b",
+      describe: "Booru to fetch from",
+      string: true,
+      demandOption: true,
+      choices: Object.keys(booru.sites),
+      hidden: false,
+    },      
+    includeOriginalSource: {
+      alias: "s",
+      describe: "Include original source in the output",
+      boolean: true,
+      demandOption: false,
+      hidden: false,
+    },
+    instance: {
+      alias: "i",
+      describe: "Instance to output posts.json to",
+      string: true,
+      demandOption: false,
+      hidden: false,
+    },
+    limit: {
+      alias: "l",
+      describe: "Limit the number of posts to fetch",
+      number: true,
+      demandOption: false,
+      hidden: false,
+    },
+    tags:{
+      describe: "Tags to fetch; WRAP IN DOUBLE QUOTES; Input tags as if you're using the booru search bar. If nothing is specified, tags.json will be used in the instance folder. ",
+      string: true,
+      demandOption: false,
+      hidden: false,
+      type: "string"
+    }
+  },
+  handler: async (argv) => {
+    let tags;
+    if (argv.instance) {
+      const exists = fs.existsSync(path.join(__dirname, `../instances/${argv.instance}/`));
+      if (!exists) {
+        console.log(`Instance ${argv.instance} not found. Creating folder for you`);
+        fs.mkdirSync(path.join(__dirname, `../instances/${argv.instance}/`));
+        try {
+          fs.copyFileSync(path.join(__dirname, "../instances/instance_example/config.example.js"), path.join(__dirname, `../instances/${argv.instance}/config.js`));        
+        } catch (e) { }
+      }
+    }
+    if (!argv.tags) {
+      console.log("No tags provided, using tags.json");
+      if (argv.instance) {
+        const tagsFile = path.join(__dirname, `../instances/${argv.instance}/tags.json`);
+        if (!fs.existsSync(tagsFile)) {
+          console.error(`tags.json not found in instance ${argv.instance}. using tags.json from cli directory`);
+          if (!fs.existsSync(path.join(__dirname, "./tags.json"))) {
+            console.error("tags.json not found in cli directory.");
+          }
+        } else {
+          tags = require(tagsFile);
+        }
+      }
+    } else {
+      tags = argv.tags.split(" ");
+      const tagRegex = /^[a-zA-Z0-9_\-\s,:]+$/;
+  
+      //@ts-expect-error argv.tags is a string
+      if (!tagRegex.test(argv.tags)) {
+        console.error("Invalid tags provided.");
+        process.exit(3);
+      }
+    }
+  
+    const options = {
+      configParams: {
+        includeTags: argv.includeTags,
+        includeOriginalSource: argv.includeOriginalSource,
+      },
+      userParameters: {
+        apiKey: argv.apiKey,
+        userId: argv.userId,
+      },
+      proxy: null,
+    };
+  
+    console.log();
+  
+    let posts = [];
+    let limitReached = false;
+    // this is dangerous I know
+    
+    processPosts:for (let i = 0; ; i++) {
+      process.stdout.write(`\rCurrent Page: ${i}; Total of ${posts.length} posts fetched.`);
+      const query = await booru.search(argv.booru, tags, {
+        page: i,
+        limit: 1000,
+      });
+  
+      for (let j = 0; j < query.posts.length; j++) {
+        const post = query.posts[j];
+        posts.push({
+          id: post.id,
+          url: post.postView.replace("&json=1", ""),
+          file_url: post.file_url,
+          tags: options.configParams.includeTags ? post.tags : undefined,
+          source: options.configParams.includeOriginalSource ? post.source : undefined,
+          rating: post.rating,
+        });
+
+        if (argv.limit && posts.length >= argv.limit) {
+          break processPosts;
+        }
+  
+        process.stdout.write(`\rCurrent Page: ${i}; Total of ${posts.length} posts fetched.`);
+      }
+  
+      if (query.posts.length === 0) {
+        break;
+      }
+
+      if (argv.limit && posts.length >= argv.limit) {
+        break;
+      }      
+    }
+
+    let destination;
+  
+    if (argv.instance) {
+      destination = path.join(__dirname, `../instances/${argv.instance}/posts.json`);
+    } else {
+      destination = path.join(__dirname, "../posts.json");
+    }
+  
+    const output = { 
+      booru: `https://${argv.booru}`,
+      posts, 
+      completedPosts: []
+    };
+
+    try {
+      fs.writeFileSync(destination, JSON.stringify(output));
+      console.info("\nFinished fetching posts and saved to " + destination);
+    } catch (error) {
+      console.error("\nFailed to save", error);
+      process.exit(1);
+    }
+  },
+}).command({
+  command: "reset",
+  describe: "Reset posts.json.\nThis does NOT clear the file! Rather, it moves the posts in `completedPosts` to `posts` to be used again. ",
+  builder: {
+    instance: {
+      alias: "i",
+      describe: "Instance to reset. Specify \"all\" to reset all instances",
+      string: true,
+      demandOption: true,
+    },
+  },
+  handler: async (argv) => {
+    /**
+     * @type {string}
+     */
+    const instanceArgs = argv.instance;
+    let instances = [];
+    // If instance contains commas
+    if (instanceArgs.includes(",")) {
+      instances.push(instanceArgs.split(","));
+    }
+
+    if (instanceArgs === "all") {
+      instances.push(...fs.readdirSync(path.join(__dirname, "../instances")));
+    }
+
+    for (const instance of instances) {
+      if (instance === "instance_example") continue;
+      resetInstancePosts(instance);
+    }
+  }
+}).command({
+  command: "boorus",
+  describe: "List boorus",
+  handler: () => {
+    console.log(`Available boorus: ${Object.keys(booru.sites).join(", ")}`);
+  }
+}).demandCommand().version(cliVersion).argv;
+
+function resetInstancePosts(instance) {
+  const postsFile = path.join(__dirname, `../instances/${instance}/posts.json`);
+  if (!fs.existsSync(postsFile)) {
+    console.error(`posts.json not found for instance ${instance}`);
+    process.exit(1);
+  }
+  const posts = require(postsFile);
+  posts.posts = [...posts.posts, ...posts.completedPosts];
+  posts.completedPosts = [];
+  posts.posts.forEach((post) => {
+    if (post.failed) {
+      delete post.failed;
+    }
+  });
+  fs.writeFileSync(postsFile, JSON.stringify(posts));
+  console.log(`Reset posts.json for instance ${instance}`);
+}
