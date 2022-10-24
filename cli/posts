@@ -223,7 +223,7 @@ yargs(hideBin(process.argv))
         }
 
         output.completedPosts = postFile.completedPosts || [];
-        output.posts = [...newPosts, ...postFile.posts];
+        output.posts = newPosts;
       } else {
         output.posts = posts;
         output.completedPosts = [];
