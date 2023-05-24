@@ -94,7 +94,7 @@ export class ErrorReporter {
     } catch {
       errormessage = message.toString() || message;
     }
-    const messageText = `**Error message:**\n${errormessage}\n\n**Error:**\n${error.message}\n\n**Stack trace:**\n${error.stack}`;
+    const messageText = `**Error message:**\n${errormessage}\n\n**Error:**\n${error?.message}\n\n**Stack trace:**\n${error?.stack}`;
     this.telegram.sendMessage(chatId, messageText);
   }
 
