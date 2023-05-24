@@ -13,7 +13,6 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "importsNotUsedAsValues": "error",
     "incremental": true,
     "inlineSources": false,
     "lib": ["ES2020"],

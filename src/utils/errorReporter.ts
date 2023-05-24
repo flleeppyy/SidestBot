@@ -76,26 +76,32 @@ export class ErrorReporter {
   }
 
   private async reportTelegram(message: any, error: Error): Promise<void> {
-    if (!this.telegram) {
-      this.logger.warn("Telegram not exist error logger");
-      return;
-    }
-
-    const chatId = this.config.telegram.chatId;
-    if (!chatId) {
-      this.logger._error("Could not report to Telegram\n" + error.stack);
-      return;
-    }
-
-    let errormessage: string;
-
     try {
-      errormessage = JSON.stringify(message);
+      if (!this.telegram) {
+        this.logger.warn("Telegram not exist error logger");
+        return;
+      }
+
+      const chatId = this.config.telegram.chatId;
+      if (!chatId) {
+        this.logger._error("Could not report to Telegram\n" + error.stack);
+        return;
+      }
+
+      let errormessage: string;
+
+      console.log("erroreport");
+      try {
+        errormessage = JSON.stringify(message);
+      } catch {
+        errormessage = message.toString() || message;
+      }
+      const messageText = `**Error message:**\n${errormessage}\n\n**Error:**\n${error?.message}\n\n**Stack trace:**\n${error?.stack}`;
+      this.telegram.sendMessage(chatId, messageText);
     } catch {
-      errormessage = message.toString() || message;
+      // oh jesus christ.
+
     }
-    const messageText = `**Error message:**\n${errormessage}\n\n**Error:**\n${error?.message}\n\n**Stack trace:**\n${error?.stack}`;
-    this.telegram.sendMessage(chatId, messageText);
   }
 
 }
